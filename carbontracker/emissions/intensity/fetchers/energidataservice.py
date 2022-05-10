@@ -18,6 +18,10 @@ class EnergiDataService(IntensityFetcher):
         if time_dur is None:
             ci = self._emission_current()
         else:
+            # The resolution of emission prognosis for this service is 5 min.
+            # Duration under 300 sec. will therefore return NaN.
+            if time_dur < 300:
+                time_dur = 300
             ci = self._emission_prognosis(time_dur=time_dur)
             carbon_intensity.is_prediction = True
 
@@ -47,9 +51,11 @@ class EnergiDataService(IntensityFetcher):
 
     def _emission_prognosis(self, time_dur):
         from_str, to_str = self._interval(time_dur=time_dur)
+        print(from_str)
+        print(to_str)
         url = ("https://api.energidataservice.dk/datastore_search_sql?"
                """sql=SELECT co2."CO2Emission" from "co2emisprog" as co2 """
-               f"""WHERE co2."Minutes5UTC" > timestamp'{from_str}' AND """
+               f"""WHERE co2."Minutes5UTC" >= timestamp'{from_str}' AND """
                f"""co2."Minutes5UTC" < timestamp'{to_str}' """
                """ORDER BY co2."Minutes5UTC" DESC""")
         response = requests.get(url)

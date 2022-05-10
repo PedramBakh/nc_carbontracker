@@ -19,7 +19,9 @@ class CarbonIntensityGB(IntensityFetcher):
 
         if time_dur is not None:
             carbon_intensity.is_prediction = True
-
+            # The resolution for this data is 30 min.
+            if time_dur < 1800:
+                time_dur = 1800
         try:
             postcode = g_location.postal
             ci = self._carbon_intensity_gb_regional(postcode,

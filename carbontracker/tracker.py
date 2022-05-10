@@ -8,6 +8,7 @@ from threading import Thread, Event
 
 import numpy as np
 
+import threading
 from carbontracker import constants
 from carbontracker import loggerutil
 from carbontracker import predictor
@@ -16,7 +17,6 @@ from carbontracker.components import component
 from carbontracker.emissions.intensity import intensity
 from carbontracker.emissions.conversion import co2eq
 from carbontracker.emissions.intensity.fetchers import co2signal
-
 
 class CarbonIntensityThread(Thread):
     """Sleeper thread to update Carbon Intensity every 15 minutes."""
@@ -250,7 +250,8 @@ class CarbonTracker:
                  log_dir=None,
                  verbose=1,
                  decimal_precision=6,
-                 logging_mode=0):
+                 logging_mode=0,
+                 logger_name='carbontracker'):
         self.epochs = epochs
         self.epochs_before_pred = (epochs if epochs_before_pred < 0 else
                                    epochs_before_pred)
@@ -270,7 +271,7 @@ class CarbonTracker:
 
         try:
             pids = self._get_pids()
-            self.logger = loggerutil.Logger(log_dir=log_dir, verbose=verbose, mode=logging_mode)
+            self.logger = loggerutil.Logger(log_dir=log_dir, verbose=verbose, mode=logging_mode, name=logger_name)
             self.tracker = CarbonTrackerThread(
                 delete=self._delete,
                 components=component.create_components(
@@ -427,9 +428,9 @@ class CarbonTracker:
             self._check_input(user_input)
 
     def _delete(self):
+        self._last_standard_stream, self._last_out_stream = self.logger.get_stream()
         self.tracker.stop()
         self.intensity_stopper.set()
-        self._last_standard_stream, self._last_out_stream = self.logger.get_stream()
         del self.logger
         del self.tracker
         del self.intensity_updater

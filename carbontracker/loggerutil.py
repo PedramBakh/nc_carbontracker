@@ -43,20 +43,20 @@ class TrackerFormatter(logging.Formatter):
 
 
 class Logger:
-    def __init__(self, log_dir=None, verbose=0, mode=0):
+    def __init__(self, log_dir=None, verbose=0, mode=0, name='carbontracker'):
         # Potential logging stream 'replicas' for mode == 1
         self._standard_stream = None
         self._output_stream = None
 
-        self.logger, self.logger_output, self.logger_err = self._setup(log_dir=log_dir, mode=mode)
+        self.logger, self.logger_output, self.logger_err = self._setup(log_dir=log_dir, mode=mode, name=name)
         self._log_initial_info()
         self.verbose = verbose
         self.msg_prepend = "CarbonTracker: "
 
-    def _setup(self, log_dir=None, mode=0):
-        logger = logging.getLogger("carbontracker")
-        logger_err = logging.getLogger("carbontracker.err")
-        logger_output = logging.getLogger("carbontracker.output")
+    def _setup(self, log_dir=None, mode=0, name='carbontracker'):
+        logger = logging.getLogger(f"{name}")
+        logger_err = logging.getLogger(f"{name}.err")
+        logger_output = logging.getLogger(f"{name}.output")
 
         # Clear previously added handlers
         if logger.hasHandlers():

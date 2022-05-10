@@ -5,7 +5,6 @@ import numpy as np
 
 from carbontracker import exceptions
 
-
 def parse_all_logs(log_dir):
     logs = []
     output_logs, std_logs = get_all_logs(log_dir)
@@ -32,7 +31,7 @@ def parse_all_logs(log_dir):
     return logs
 
 
-def parse_streams(std, out):
+def parse_streams(std, out, timestamp=False, avg_carbon_intensity=False):
     actual, pred = get_consumption(out.getvalue())
     early_stop = get_early_stop(std.getvalue())
     entry = {
@@ -41,8 +40,47 @@ def parse_streams(std, out):
         "actual": actual,
         "pred": pred
     }
+    if timestamp:
+        start_re = re.compile(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (Monitoring thread started)")
+        stop_re = re.compile(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (Duration:)")
+
+        start_match = re.search(start_re, std.getvalue())
+        stop_match = re.search(stop_re, std.getvalue())
+
+        start_time = start_match.groups()
+        stop_time = stop_match.groups()
+        entry['actual']['start_emission'] = start_time[0]
+        entry['actual']['stop_emission'] = stop_time[0]
+
+    if avg_carbon_intensity:
+        actual_re = re.compile(r"(Average carbon intensity during training was) (\d*[.]\d*)")
+        pred_re = re.compile(r"(is predicted to be) (\d*[.]\d*) (gCO2/kWh)")
+
+        actual_match = re.search(actual_re, std.getvalue())
+        pred_match = re.search(pred_re, std.getvalue())
+
+        avg_actual = actual_match.groups()
+        entry['actual']['avg_intensity (gCO2/kWh)'] = float(avg_actual[1])
+        if pred_match is not None:
+            avg_pred = pred_match.groups()
+            entry['pred']['avg_intensity (gCO2/kWh)'] = float(avg_pred[1])
 
     return entry
+
+def filter_logs(log, filter, nested=False):
+    """
+    Filters (removes) log entries by key and currently supports one level of nesting.
+    """
+    if nested:
+        for nested_dict in log:
+            for key in filter:
+                try:
+                    del log[nested_dict][key]
+                except:
+                    pass
+        return log
+    else:
+        return {key: value for key, value in log if value not in filter}
 
 
 def parse_logs(log_dir, std_log_file=None, output_log_file=None, from_file=True):
