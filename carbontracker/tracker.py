@@ -28,7 +28,6 @@ class CarbonIntensityThread(Thread):
         self.daemon = True
         self.stop_event = stop_event
         self.carbon_intensities = []
-
         self.start()
 
     def run(self):
@@ -250,7 +249,8 @@ class CarbonTracker:
                  devices_by_pid=False,
                  log_dir=None,
                  verbose=1,
-                 decimal_precision=6):
+                 decimal_precision=6,
+                 logging_mode=0):
         self.epochs = epochs
         self.epochs_before_pred = (epochs if epochs_before_pred < 0 else
                                    epochs_before_pred)
@@ -270,7 +270,7 @@ class CarbonTracker:
 
         try:
             pids = self._get_pids()
-            self.logger = loggerutil.Logger(log_dir=log_dir, verbose=verbose)
+            self.logger = loggerutil.Logger(log_dir=log_dir, verbose=verbose, mode=logging_mode)
             self.tracker = CarbonTrackerThread(
                 delete=self._delete,
                 components=component.create_components(
@@ -429,6 +429,7 @@ class CarbonTracker:
     def _delete(self):
         self.tracker.stop()
         self.intensity_stopper.set()
+        self._last_standard_stream, self._last_out_stream = self.logger.get_stream()
         del self.logger
         del self.tracker
         del self.intensity_updater
@@ -441,3 +442,9 @@ class CarbonTracker:
         pids = [process.pid
                 ] + [child.pid for child in process.children(recursive=True)]
         return pids
+
+    def get_logger_stream(self):
+        if not self.deleted:
+            return self.logger.get_stream()
+        return self._last_standard_stream, self._last_out_stream
+

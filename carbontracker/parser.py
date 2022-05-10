@@ -32,13 +32,29 @@ def parse_all_logs(log_dir):
     return logs
 
 
-def parse_logs(log_dir, std_log_file=None, output_log_file=None):
+def parse_streams(std, out):
+    actual, pred = get_consumption(out.getvalue())
+    early_stop = get_early_stop(std.getvalue())
+    entry = {
+        "components": parse_logs(log_dir=None, std_log_file=std.getvalue(), output_log_file=out.getvalue(), from_file=False),
+        "early_stop": early_stop,
+        "actual": actual,
+        "pred": pred
+    }
+
+    return entry
+
+
+def parse_logs(log_dir, std_log_file=None, output_log_file=None, from_file=True):
     """Parse logs in log_dir (defaults to most recent logs)."""
     if std_log_file is None or output_log_file is None:
         std_log_file, output_log_file = get_most_recent_logs(log_dir)
 
-    with open(std_log_file, "r") as f:
-        std_log_data = f.read()
+    if from_file:
+        with open(std_log_file, "r") as f:
+            std_log_data = f.read()
+    else:
+        std_log_data = std_log_file
 
     epoch_durations = get_epoch_durations(std_log_data)
     avg_power_usages = get_avg_power_usages(std_log_data)

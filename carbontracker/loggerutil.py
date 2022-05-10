@@ -3,6 +3,7 @@ import os
 import sys
 import pathlib
 import datetime
+from io import StringIO
 
 from carbontracker import constants
 
@@ -42,17 +43,31 @@ class TrackerFormatter(logging.Formatter):
 
 
 class Logger:
-    def __init__(self, log_dir=None, verbose=0):
-        self.logger, self.logger_output, self.logger_err = self._setup(
-            log_dir=log_dir)
+    def __init__(self, log_dir=None, verbose=0, mode=0):
+        # Potential logging stream 'replicas' for mode == 1
+        self._standard_stream = None
+        self._output_stream = None
+
+        self.logger, self.logger_output, self.logger_err = self._setup(log_dir=log_dir, mode=mode)
         self._log_initial_info()
         self.verbose = verbose
         self.msg_prepend = "CarbonTracker: "
 
-    def _setup(self, log_dir=None):
+    def _setup(self, log_dir=None, mode=0):
         logger = logging.getLogger("carbontracker")
         logger_err = logging.getLogger("carbontracker.err")
         logger_output = logging.getLogger("carbontracker.output")
+
+        # Clear previously added handlers
+        if logger.hasHandlers():
+            logger.handlers.clear()
+
+        if logger_err.hasHandlers():
+            logger_err.handlers.clear()
+
+        if logger_output.hasHandlers():
+            logger_output.handlers.clear()
+
         # Disable output logging from propagating to parent loggers.
         logger.propagate = False
         logger.setLevel(logging.DEBUG)
@@ -110,6 +125,22 @@ class Logger:
             f_err.setFormatter(err_formatter)
             logger_err.addHandler(f_err)
 
+        if mode == 1:
+            f_formatter = TrackerFormatter(fmt="%(asctime)s - %(message)s")
+            # Add standard logging to stream
+            self._standard_stream = StringIO()
+            std_handler = logging.StreamHandler(stream=self._standard_stream)
+            std_handler.setLevel(logging.INFO)
+            std_handler.setFormatter(f_formatter)
+            logger.addHandler(std_handler)
+
+            # Add output logging to stream
+            self._output_stream = StringIO()
+            output_handler = logging.StreamHandler(stream=self._output_stream)
+            output_handler.setLevel(logging.DEBUG)
+            output_handler.setFormatter(f_formatter)
+            logger_output.addHandler(output_handler)
+
         return logger, logger_output, logger_err
 
     def _log_initial_info(self):
@@ -141,3 +172,6 @@ class Logger:
 
     def err_critical(self, msg):
         self.logger_err.critical(msg)
+
+    def get_stream(self):
+        return self._standard_stream, self._output_stream
