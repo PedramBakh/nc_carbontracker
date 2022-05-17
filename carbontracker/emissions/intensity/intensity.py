@@ -38,7 +38,7 @@ def carbon_intensity(logger, time_dur=None):
     # Will iterate over and find *first* suitable() api
     fetchers = [
         energidataservice.EnergiDataService(),
-        carbonintensitygb.CarbonIntensityGB(),
+        # carbonintensitygb.CarbonIntensityGB(),
         co2signal.CO2Signal()
     ]
 
