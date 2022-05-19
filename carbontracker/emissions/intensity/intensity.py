@@ -11,6 +11,14 @@ from carbontracker.emissions.intensity.fetchers import co2signal
 from carbontracker.emissions.intensity.fetchers import carbonintensitygb
 from carbontracker.emissions.intensity.fetchers import energidataservice
 
+class IpInfoResultMock:
+    def __init__(self):
+	self.address = "Copenhagen, Capital Region, DK"
+	self.city = "Copenhagen"
+	self.region = "Capital Region"
+	self.Country = "DK"
+	self.ok = True
+	self.status = "OK"
 
 class CarbonIntensity:
     def __init__(self,
@@ -45,7 +53,9 @@ def carbon_intensity(logger, time_dur=None):
     carbon_intensity = CarbonIntensity(default=True)
 
     try:
-        g_location = geocoder.ip("me")
+        # g_location = geocoder.ip("me")
+	# Use a mock to prevent 429 errors since we know our location.
+	g_location = IpInfoResultMock()
         if not g_location.ok:
             raise exceptions.IPLocationError(
                 "Failed to retrieve location based on IP.")
