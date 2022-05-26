@@ -431,6 +431,7 @@ class CarbonTracker:
         self._last_standard_stream, self._last_out_stream = self.logger.get_stream()
         self.tracker.stop()
         self.intensity_stopper.set()
+        self.logger.__del__()
         del self.logger
         del self.tracker
         del self.intensity_updater

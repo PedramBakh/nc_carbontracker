@@ -175,3 +175,19 @@ class Logger:
 
     def get_stream(self):
         return self._standard_stream, self._output_stream
+
+    def __del__(self):
+        if self.logger:
+            for handler in self.logger.handlers[:]:
+                handler.close()
+                self.logger.removeHandler(handler)
+
+        if self.logger_err:
+            for handler in self.logger_err.handlers[:]:
+                handler.close()
+                self.logger_err.removeHandler(handler)
+
+        if self.logger_output:
+            for handler in self.logger_output.handlers[:]:
+                handler.close()
+                self.logger_output.removeHandler(handler)
