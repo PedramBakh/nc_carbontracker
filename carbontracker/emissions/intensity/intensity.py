@@ -46,16 +46,16 @@ def carbon_intensity(logger, time_dur=None):
     # Will iterate over and find *first* suitable() api
     fetchers = [
         energidataservice.EnergiDataService(),
-        # carbonintensitygb.CarbonIntensityGB(),
+        carbonintensitygb.CarbonIntensityGB(),
         co2signal.CO2Signal()
     ]
 
     carbon_intensity = CarbonIntensity(default=True)
 
     try:
-        # g_location = geocoder.ip("me")
-	# Use a mock to prevent 429 errors since we know our location.
-        g_location = IpInfoResultMock()
+        g_location = geocoder.ip("me")
+        # Use a mock to prevent 429 errors since we know our location.
+        #g_location = IpInfoResultMock()
         if not g_location.ok:
             raise exceptions.IPLocationError(
                 "Failed to retrieve location based on IP.")
